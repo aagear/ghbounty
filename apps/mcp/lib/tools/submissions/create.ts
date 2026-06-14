@@ -17,7 +17,7 @@ import { mcpError } from "@/lib/errors";
 import { getChainId } from "@/lib/config";
 import { requireRole } from "@/lib/tools/role-guard";
 import { requireWalletDelegated } from "@/lib/tools/delegation-guard";
-import { verifyPrOwnership } from "@ghbounty/shared";
+import { verifyPrOwnership, extractIssueReference, fetchPrBody } from "@ghbounty/shared";
 import {
   getPrivyServerClient,
   signSolanaTransaction,
@@ -155,6 +155,43 @@ export async function handleSubmissionsCreate(raw: unknown) {
     return {
       error: mcpError(code, `PR ownership check failed: ${verify.reason}`),
     };
+  }
+
+  // --- PR body cross-check (GHB-108 defense: prevent auto-detection mismatch) ---
+  // Best-effort: fetch the PR body and extract "Closes #XX" / "Fixes #XX"
+  // references. If the referenced issue does NOT match the bounty's issue
+  // number (parsed from its github_issue_url), log a warning so operators
+  // can investigate. Never blocks the submission — the explicit bounty_id
+  // parameter is what the on-chain program trusts.
+  let crossCheck: { issueRef: number | null; matchesExpected: boolean | null } = {
+    issueRef: null,
+    matchesExpected: null,
+  };
+  try {
+    const body = await fetchPrBody(parsed.data.pr_url, process.env.GITHUB_TOKEN);
+    if (body) {
+      const ref = extractIssueReference(body);
+      if (ref !== null) {
+        // Parse the bounty's GitHub issue number from its URL
+        const issueUrlMatch = b.github_issue_url?.match(/\/issues\/(\d+)/);
+        const expectedIssueNum = issueUrlMatch
+          ? Number.parseInt(issueUrlMatch[1], 10)
+          : null;
+        crossCheck = {
+          issueRef: ref,
+          matchesExpected: expectedIssueNum !== null ? ref === expectedIssueNum : null,
+        };
+      }
+    }
+  } catch {
+    // Best-effort only — never block for a transient fetch error
+  }
+  if (crossCheck.issueRef !== null && crossCheck.matchesExpected === false) {
+    console.warn(
+      `[GHB-108] PR ${parsed.data.pr_url} references issue #${crossCheck.issueRef} ` +
+      `but bounty ${b.id} has issue ${b.github_issue_url ?? "unknown"}. ` +
+      `Submission continues using the explicit bounty_id parameter.`
+    );
   }
 
   // --- Fetch latest blockhash ---

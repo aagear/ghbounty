@@ -7,3 +7,5 @@ export type {
   VerifyPrOwnershipInput,
   VerifyPrOwnershipResult,
 } from "./github/verify-pr-ownership";
+export { extractIssueReference } from "./github/extract-issue-reference";
+export { fetchPrBody } from "./github/fetch-pr-body";
