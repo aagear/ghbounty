@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { Avatar } from "./Avatar";
 import { createClient } from "@/utils/supabase/client";
 import {
+  clearAllNotifications,
   fetchNotifications,
   fetchUnreadCount,
   markAllRead,
@@ -115,6 +116,17 @@ export function NotificationsBell({ userId }: { userId: string }) {
     await markAllRead(supabase, userId);
   }
 
+  const [confirmingClear, setConfirmingClear] = useState(false);
+
+  async function onClearAll() {
+    // Optimistic UI: empty the list immediately
+    setItems([]);
+    setUnread(0);
+    setConfirmingClear(false);
+    const supabase = createClient();
+    await clearAllNotifications(supabase, userId);
+  }
+
   const hasItems = items.length > 0;
   const badge = unread > 99 ? "99+" : unread > 0 ? String(unread) : null;
 
@@ -154,6 +166,34 @@ export function NotificationsBell({ userId }: { userId: string }) {
               >
                 Mark all read
               </button>
+            )}
+            {hasItems && !confirmingClear && (
+              <button
+                type="button"
+                className="notif-clear-all"
+                onClick={() => setConfirmingClear(true)}
+              >
+                Clear all
+              </button>
+            )}
+            {confirmingClear && (
+              <span className="notif-clear-confirm">
+                <span>Delete all?</span>
+                <button
+                  type="button"
+                  className="notif-clear-yes"
+                  onClick={() => void onClearAll()}
+                >
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  className="notif-clear-no"
+                  onClick={() => setConfirmingClear(false)}
+                >
+                  No
+                </button>
+              </span>
             )}
           </div>
 
