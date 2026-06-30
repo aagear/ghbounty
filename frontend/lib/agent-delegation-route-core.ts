@@ -8,6 +8,7 @@
  *
  * POST actions:
  *   delegate — upsert a row into `agent_delegations` (wallet_pubkey + chain_type)
+ *              and backfill `profiles.wallet_pubkey` if null (GHB-110)
  *   revoke   — set revoked_at = now() on the caller's row
  *
  * GET — returns the caller's current delegation row (or null if none).
@@ -49,6 +50,16 @@ export async function delegateWallet(
     { onConflict: "user_id" },
   );
   if (error) return { ok: false, error: "internal", detail: error.message };
+
+  // GHB-110: backfill profiles.wallet_pubkey so MCP auth can read it
+  // from the profiles table. Only set when currently null — don't
+  // overwrite an existing value.
+  await supabase
+    .from("profiles")
+    .update({ wallet_pubkey: input.wallet_pubkey, updated_at: now })
+    .eq("user_id", input.user_id)
+    .is("wallet_pubkey", null);
+
   return { ok: true };
 }
 
