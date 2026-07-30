@@ -13,6 +13,11 @@ describe("classifyPath — lockfiles", () => {
     "composer.lock",
     "flake.lock",
     "uv.lock",
+    "deno.lock",
+    "pubspec.lock",
+    "Podfile.lock",
+    "packages.lock.json",
+    "gradle.lockfile",
     "relayer/pnpm-lock.yaml",
     "nested/deep/Cargo.lock",
   ])("marks %s as lockfile", (path) => {
@@ -49,6 +54,10 @@ describe("classifyPath — generated dirs", () => {
     "app/.next/static/chunks/webpack.js",
     "coverage/lcov-report/index.html",
     "__pycache__/module.cpython-311.pyc",
+    ".dart_tool/package_config.json",
+    ".gradle/build-cache-1.lock",
+    ".parcel-cache/abc123/index.html",
+    ".docusaurus/docusaurus-plugin-content-docs.json",
   ])("marks %s as generated_dir", (path) => {
     const r = classifyPath(path);
     expect(r.ignore).toBe(true);
