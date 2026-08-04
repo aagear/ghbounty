@@ -81,7 +81,7 @@ describe("classifyPath — cache files", () => {
   ])("marks %s as generated file", (path) => {
     const r = classifyPath(path);
     expect(r.ignore).toBe(true);
-    expect(r.reason).toBe("generated_file");
+    expect(r.reason).toBe("generated_name");
   });
 });
 
