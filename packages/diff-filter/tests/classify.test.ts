@@ -63,6 +63,10 @@ describe("classifyPath — generated suffixes", () => {
     "src/bundle.js.map",
     "proto/service.pb.ts",
     "service_grpc_pb.js",
+    "generated/user_pb2.py",
+    "generated/user_pb2.pyi",
+    "generated/user_pb2_grpc.py",
+    "generated/user_pb.rb",
   ])("marks %s as generated_suffix", (path) => {
     const r = classifyPath(path);
     expect(r.ignore).toBe(true);

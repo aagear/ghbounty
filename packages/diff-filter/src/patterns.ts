@@ -97,6 +97,10 @@ export const GENERATED_FILE_SUFFIXES = [
   "_pb.js",
   ".g.dart",
   ".freezed.dart",
+  "_pb2.py",
+  "_pb2.pyi",
+  "_pb2_grpc.py",
+  "_pb.rb",
   ".generated.ts",
   ".gen.ts",
 ];
